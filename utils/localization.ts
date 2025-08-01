@@ -15,6 +15,7 @@ import no from "~/assets/i18n/no.json";
 import pl from "~/assets/i18n/pl.json";
 import pt from "~/assets/i18n/pt.json";
 import ru from "~/assets/i18n/ru.json";
+import ta from "~/assets/i18n/ta.json";
 import th from "~/assets/i18n/th.json";
 import tr from "~/assets/i18n/tr.json";
 import uk from "~/assets/i18n/uk.json";
@@ -36,6 +37,7 @@ export const resources = {
   pl: { translation: pl, VAPILangCode: "pl-PL" },
   pt: { translation: pt, VAPILangCode: "pt-BR" },
   ru: { translation: ru, VAPILangCode: "ru-RU" },
+  ta: { translation: ta, VAPILangCode: "en-US" },
   th: { translation: th, VAPILangCode: "th-TH" },
   tr: { translation: tr, VAPILangCode: "tr-TR" },
   uk: { translation: uk, VAPILangCode: "vi-VN" },
