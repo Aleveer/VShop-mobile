@@ -137,24 +137,26 @@ export async function parseShop(shop: StorefrontResponse) {
     const bundle = shop.FeaturedBundle.Bundles[b];
     const bundleAsset = await fetchBundle(bundle.DataAssetID);
 
-    bundles.push({
-      ...bundleAsset,
-      price: bundle.Items.map((item) => item.DiscountedPrice).reduce(
-        (a, b) => a + b
-      ),
-      items: bundle.Items.filter(
-        (item) => item.Item.ItemTypeID === VItemTypes.SkinLevel
-      ).map((item) => {
-        const skin = skins.find(
-          (_skin) => _skin.levels[0].uuid === item.Item.ItemID
-        ) as ValorantSkin;
+    if (bundleAsset != null) {
+      bundles.push({
+        ...bundleAsset,
+        price: bundle.Items.map((item) => item.DiscountedPrice).reduce(
+          (a, b) => a + b
+        ),
+        items: bundle.Items.filter(
+          (item) => item.Item.ItemTypeID === VItemTypes.SkinLevel
+        ).map((item) => {
+          const skin = skins.find(
+            (_skin) => _skin.levels[0].uuid === item.Item.ItemID
+          ) as ValorantSkin;
 
-        return {
-          ...skin,
-          price: item.BasePrice,
-        };
-      }),
-    });
+          return {
+            ...skin,
+            price: item.BasePrice,
+          };
+        }),
+      });
+    }
   }
 
   /* NIGHT MARKET */

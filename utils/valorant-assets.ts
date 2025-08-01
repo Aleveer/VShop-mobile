@@ -125,7 +125,8 @@ export async function fetchBundle(bundleId: string, language?: string) {
       language ?? getVAPILang()
     }`,
     method: "GET",
+    validateStatus: () => true,
   });
 
-  return res.data.data;
+  return res.status === 200 ? res.data.data : null;
 }
