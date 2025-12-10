@@ -14,6 +14,9 @@ import {
   getShop,
   getUserId,
   getUsername,
+  getLoadout,
+  getOwnedItemsForTypes,
+  mapLoadoutResponse,
   parseShop,
 } from "~/utils/valorant-api";
 import { checkDonator } from "~/utils/vshop-api";
@@ -89,6 +92,24 @@ export default function LoginWebView() {
           userId
         );
 
+        setLoading(t("fetching.loadout"));
+        const loadoutResponse = await getLoadout(
+          accessToken,
+          entitlementsToken,
+          region,
+          userId
+        );
+        const loadout = mapLoadoutResponse(loadoutResponse);
+
+        setLoading(t("fetching.owned_items"));
+        const ownedItems = await getOwnedItemsForTypes(
+          accessToken,
+          entitlementsToken,
+          region,
+          userId,
+          ["SkinLevel", "Spray", "Buddy", "PlayerCard", "PlayerTitle"]
+        );
+
         setLoading(t("fetching.donator"));
         const isDonator = await checkDonator(userId);
         if (isDonator) enableDonator();
@@ -101,6 +122,8 @@ export default function LoginWebView() {
           shops,
           progress,
           balances,
+          loadout,
+          ownedItems,
         });
         router.replace("/shop");
       } catch (e) {

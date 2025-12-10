@@ -130,3 +130,27 @@ export async function fetchBundle(bundleId: string, language?: string) {
 
   return res.status === 200 ? res.data.data : null;
 }
+
+export async function fetchLoadout(loadoutId: string, language?: string) {
+  // Valorant API does not expose a typed loadout shape here
+  const res = await axios.request<{ data: any }>({
+    url: `https://valorant-api.com/v1/loadouts/${loadoutId}?language=${
+      language ?? getVAPILang()
+    }`,
+    method: "GET",
+  });
+
+  return res.data.data;
+}
+
+export async function fetchOwnedItems(itemTypeId: string, language?: string) {
+  // Owned items shape is not typed in this module
+  const res = await axios.request<{ data: any[] }>({
+    url: `https://valorant-api.com/v1/owneditems/${itemTypeId}?language=${
+      language ?? getVAPILang()
+    }`,
+    method: "GET",
+  });
+
+  return res.data.data;
+}

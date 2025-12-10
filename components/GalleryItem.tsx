@@ -18,7 +18,9 @@ export default function GalleryItem(props: React.PropsWithChildren<props>) {
 
   return (
     <List.Item
-      title={`${props.item.onWishlist ? "⭐ " : ""}${props.item.displayName}`}
+      title={`${
+        props.item.onWishlist ? "⭐ " : ""
+      }${props.item.owned ? "✔ " : ""}${props.item.displayName}`}
       left={(_props) => (
         <Image
           {..._props}

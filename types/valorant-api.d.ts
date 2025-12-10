@@ -291,3 +291,43 @@ type AccountXPResponse = {
   /** Date in ISO 8601 format */
   NextTimeFirstWinAvailable: string;
 };
+
+type PlayerLoadoutResponse = {
+  /** Player UUID */
+  Subject: string;
+  Version: number;
+  Guns: {
+    ID: string;
+    CharmInstanceID?: string | undefined;
+    CharmID?: string | undefined;
+    CharmLevelID?: string | undefined;
+    SkinID: string;
+    SkinLevelID: string;
+    ChromaID: string;
+    Attachments: unknown[];
+  }[];
+  Sprays: {
+    EquipSlotID: string;
+    SprayID: string;
+    SprayLevelID: null;
+  }[];
+  Identity: {
+    PlayerCardID: string;
+    PlayerTitleID: string;
+    AccountLevel: number;
+    PreferredLevelBorderID: string;
+    HideAccountLevel: boolean;
+  };
+  Incognito: boolean;
+};
+
+type OwnedItemsResponse = {
+  EntitlementsByTypes: {
+    ItemTypeID: string;
+    Entitlements: {
+      TypeID: string;
+      ItemID: string;
+      InstanceID?: string | undefined;
+    }[];
+  }[];
+};

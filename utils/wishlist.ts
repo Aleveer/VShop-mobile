@@ -8,7 +8,6 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import i18n, { getVAPILang } from "./localization";
-import { checkDonator } from "./vshop-api";
 import { useWishlistStore } from "~/hooks/useWishlistStore";
 import * as Notifications from "expo-notifications";
 import BackgroundFetch from "react-native-background-fetch";
@@ -64,10 +63,6 @@ export async function checkShop(wishlist: string[]) {
     const res = await reAuth(version);
     const accessToken = getAccessTokenFromUri(res.data.response.parameters.uri);
     const userId = getUserId(accessToken);
-
-    // Check for donator
-    const isDonator = await checkDonator(userId);
-    if (!isDonator) return;
 
     const entitlementsToken = await getEntitlementsToken(accessToken);
     const region = (await AsyncStorage.getItem("region")) || "eu";

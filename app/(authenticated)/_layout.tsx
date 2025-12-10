@@ -104,6 +104,15 @@ function Layout() {
           }}
         />
         <Drawer.Screen
+          name="loadout"
+          options={{
+            title: t("loadout"),
+            drawerIcon: ({ color, size }) => (
+              <Icon name="bag-personal" color={color} size={size} />
+            ),
+          }}
+        />
+        <Drawer.Screen
           name="gallery"
           options={{
             title: t("gallery"),

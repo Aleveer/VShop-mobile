@@ -18,6 +18,8 @@ export let defaultUser = {
   id: "",
   name: "",
   region: "",
+  loadout: null as PlayerLoadout | null,
+  ownedItems: null as OwnedItems | null,
   shops: {
     main: [] as SkinShopItem[],
     bundles: [] as BundleShopItem[],
@@ -118,7 +120,7 @@ export async function parseShop(shop: StorefrontResponse) {
   let main: SkinShopItem[] = [];
   const { skins, buddies, cards, sprays, titles } = getAssets();
 
-  for (var i = 0; i < singleItemStoreOffers.length; i++) {
+  for (let i = 0; i < singleItemStoreOffers.length; i++) {
     const offer = singleItemStoreOffers[i];
 
     const skin = skins.find((_skin) => _skin.levels[0].uuid === offer.OfferID);
@@ -133,7 +135,7 @@ export async function parseShop(shop: StorefrontResponse) {
 
   /* BUNDLES */
   const bundles: BundleShopItem[] = [];
-  for (var b = 0; b < shop.FeaturedBundle.Bundles.length; b++) {
+  for (let b = 0; b < shop.FeaturedBundle.Bundles.length; b++) {
     const bundle = shop.FeaturedBundle.Bundles[b];
     const bundleAsset = await fetchBundle(bundle.DataAssetID);
 
@@ -162,8 +164,8 @@ export async function parseShop(shop: StorefrontResponse) {
   /* NIGHT MARKET */
   let nightMarket: NightMarketItem[] = [];
   if (shop.BonusStore) {
-    var bonusStore = shop.BonusStore.BonusStoreOffers;
-    for (var k = 0; k < bonusStore.length; k++) {
+    const bonusStore = shop.BonusStore.BonusStoreOffers;
+    for (let k = 0; k < bonusStore.length; k++) {
       let itemid = bonusStore[k].Offer.Rewards[0].ItemID;
       const skin = skins.find(
         (_skin) => _skin.levels[0].uuid === itemid
@@ -181,7 +183,7 @@ export async function parseShop(shop: StorefrontResponse) {
   /* ACCESSORY SHOP */
   let accessoryStore = shop.AccessoryStore.AccessoryStoreOffers;
   let accessory: AccessoryShopItem[] = [];
-  for (var i = 0; i < accessoryStore.length; i++) {
+  for (let i = 0; i < accessoryStore.length; i++) {
     const accessoryItem = accessoryStore[i].Offer;
 
     // This is a pain because of different return types
@@ -270,6 +272,118 @@ export async function getBalances(
   };
 }
 
+export async function getLoadout(
+  accessToken: string,
+  entitlementsToken: string,
+  region: string,
+  userId: string
+) {
+  const res = await axios.request<PlayerLoadoutResponse>({
+    url: getUrl("loadout", region, userId),
+    method: "GET",
+    headers: {
+      ...extraHeaders(),
+      Authorization: `Bearer ${accessToken}`,
+      "X-Riot-Entitlements-JWT": entitlementsToken,
+    },
+  });
+
+  return res.data;
+}
+
+export async function getOwnedItems(
+  accessToken: string,
+  entitlementsToken: string,
+  region: string,
+  userId: string,
+  itemType: keyof typeof VItemTypes
+) {
+  const itemTypeId = VItemTypes[itemType];
+
+  const res = await axios.request<OwnedItemsResponse>({
+    url: getUrl("owned_items", region, userId, itemTypeId),
+    method: "GET",
+    headers: {
+      ...extraHeaders(),
+      Authorization: `Bearer ${accessToken}`,
+      "X-Riot-Entitlements-JWT": entitlementsToken,
+    },
+  });
+
+  //Return all currently owned items of the given type
+  return res.data;
+}
+
+export async function getOwnedItemsForTypes(
+  accessToken: string,
+  entitlementsToken: string,
+  region: string,
+  userId: string,
+  itemTypes: (keyof typeof VItemTypes)[]
+) {
+  const results: OwnedItemsByType[] = [];
+
+  for (const type of itemTypes) {
+    const apiResponse = await getOwnedItems(
+      accessToken,
+      entitlementsToken,
+      region,
+      userId,
+      type
+    );
+
+    const mapped: OwnedItemsByType = {
+      itemTypeID: VItemTypes[type],
+      entitlements:
+        apiResponse.EntitlementsByTypes?.flatMap((ent) =>
+          ent.Entitlements.map((e) => ({
+            typeID: e.TypeID,
+            itemID: e.ItemID,
+            instanceID: e.InstanceID,
+          }))
+        ) ?? [],
+    };
+
+    results.push(mapped);
+  }
+
+  return {
+    entitlementsByTypes: results,
+  } as OwnedItems;
+}
+
+export function mapLoadoutResponse(
+  loadout: PlayerLoadoutResponse
+): PlayerLoadout {
+  return {
+    subject: loadout.Subject,
+    version: loadout.Version,
+    incognito: loadout.Incognito,
+    guns: loadout.Guns.map((gun) => ({
+      id: gun.ID,
+      charmInstanceID: gun.CharmInstanceID ?? "",
+      charmID: gun.CharmID ?? "",
+      charmLevelID: gun.CharmLevelID ?? "",
+      skinID: gun.SkinID,
+      skinLevelID: gun.SkinLevelID,
+      chromaID: gun.ChromaID,
+      attachments: gun.Attachments,
+    })),
+    sprays: loadout.Sprays.map((spray) => ({
+      equipSlotID: spray.EquipSlotID,
+      sprayID: spray.SprayID,
+      sprayLevelID: spray.SprayLevelID ?? "",
+    })),
+    identity: {
+      playerCardID: loadout.Identity.PlayerCardID,
+      playerTitleID: loadout.Identity.PlayerTitleID,
+      accountLevel: loadout.Identity.AccountLevel,
+      preferredLevelBorderID: loadout.Identity.PreferredLevelBorderID,
+      hideAccountLevel: loadout.Identity.HideAccountLevel,
+    },
+  };
+}
+
 export async function getProgress(
   accessToken: string,
   entitlementsToken: string,
@@ -321,7 +435,12 @@ export const reAuth = (version: string) =>
     withCredentials: true,
   });
 
-function getUrl(name: string, region?: string, userId?: string) {
+function getUrl(
+  name: string,
+  region?: string,
+  userId?: string,
+  itemTypeId?: string
+) {
   const URLS: any = {
     auth: "https://auth.riotgames.com/api/v1/authorization/",
     entitlements: "https://entitlements.auth.riotgames.com/api/token/v1/",
@@ -331,6 +450,8 @@ function getUrl(name: string, region?: string, userId?: string) {
     weapons: "https://valorant-api.com/v1/weapons/",
     offers: `https://pd.${region}.a.pvp.net/store/v1/offers/`,
     name: `https://pd.${region}.a.pvp.net/name-service/v2/players`,
+    loadout: `https://pd.${region}.a.pvp.net/personalization/v2/players/${userId}/playerloadout`,
+    owned_items: `https://pd.${region}.a.pvp.net/store/v1/entitlements/${userId}/${itemTypeId}`,
   };
 
   return URLS[name];

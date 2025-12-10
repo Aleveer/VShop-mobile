@@ -7,8 +7,10 @@ import {
 } from "recyclerlistview";
 import { Dimensions } from "react-native";
 import { useWishlistStore } from "~/hooks/useWishlistStore";
+import { useUserStore } from "~/hooks/useUserStore";
 import GalleryItem from "~/components/GalleryItem";
 import { getAssets } from "~/utils/valorant-assets";
+import { VItemTypes } from "~/utils/misc";
 
 function useDebounceValue(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = React.useState(value);
@@ -32,6 +34,14 @@ function Gallery() {
     return r1.uuid !== r2.uuid;
   }).cloneWithRows(gallerySkins);
   const { skinIds, toggleSkin } = useWishlistStore();
+  const user = useUserStore(({ user }) => user);
+
+  const ownedSkinLevels = React.useMemo(() => {
+    const ent = user.ownedItems?.entitlementsByTypes.find(
+      (t) => t.itemTypeID === VItemTypes.SkinLevel
+    );
+    return new Set(ent?.entitlements.map((e) => e.itemID) ?? []);
+  }, [user]);
 
   React.useEffect(() => {
     setGallerySkins(
@@ -48,12 +58,13 @@ function Gallery() {
         .map((item) => ({
           ...item,
           onWishlist: skinIds.includes(item.levels[0].uuid),
+          owned: ownedSkinLevels.has(item.levels[0].uuid),
         }))
         .sort((a, b) =>
           a.onWishlist === b.onWishlist ? 0 : a.onWishlist ? -1 : 1
         )
     );
-  }, [debouncedQuery, skinIds]);
+  }, [debouncedQuery, skinIds, ownedSkinLevels]);
 
   const rowRenderer = (
     type: string | number,
